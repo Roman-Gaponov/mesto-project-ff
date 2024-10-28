@@ -10,21 +10,26 @@ function createCardExample() {
 const cardContainer = document.querySelector(".places__list");
 
 // функция создания карточки
-function addCard(initialCardValues, deleteCard) {
+function createCard(initialCardValues, deleteCard) {
   // создаём экземпляр карточки
   const cardExample = createCardExample();
+
+  // записываем название карточки и изображение к ней в отдельные переменные
+  const cardTitle = cardExample.querySelector(".card__title");
+  const cardImage = cardExample.querySelector(".card__image");
+
   // добавляем название карточки
-  cardExample.querySelector(".card__title").textContent = initialCardValues.name;
-  // добавляем ссылку на картинку
-  cardExample.querySelector(".card__image").src = initialCardValues.link;
-  // добавляем описание картинки в атрибут alt
-  cardExample.querySelector(".card__image").alt = initialCardValues.name;
+  cardTitle.textContent = initialCardValues.name;
+  // добавляем ссылку на изображение
+  cardImage.src = initialCardValues.link;
+  // добавляем описание изображения в атрибут alt
+  cardImage.alt = initialCardValues.name;
   // добавляем к кнопке удаления обработчик события, с коллбэком, получаемым в качестве параметра
   cardExample
     .querySelector(".card__delete-button")
     .addEventListener("click", deleteCard);
 
-  cardContainer.append(cardExample);
+  return cardExample;
 }
 
 // функция удаления карточки
@@ -34,5 +39,6 @@ function deleteCard(evt) {
 
 // выводим карточки на страницу
 initialCards.forEach((item) => {
-  addCard(item, deleteCard);
+  let cardElement = createCard(item, deleteCard);
+  cardContainer.append(cardElement);
 });
