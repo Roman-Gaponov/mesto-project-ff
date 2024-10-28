@@ -39,6 +39,6 @@ function deleteCard(evt) {
 
 // выводим карточки на страницу
 initialCards.forEach((item) => {
-  let cardElement = createCard(item, deleteCard);
+  const cardElement = createCard(item, deleteCard);
   cardContainer.append(cardElement);
 });
