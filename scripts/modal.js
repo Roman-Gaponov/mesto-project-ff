@@ -1,19 +1,32 @@
-function openModal(popup) {
-  popup.classList.add("popup_is-opened");
+/* ИМПОРТ */
+
+import { cssClassToOpenModal } from "./index.js";
+
+/* ФУНКЦИИ ДЛЯ РАБОТЫ С ПОПАПАМИ */
+
+//  функция открывает попап
+// принимает в качестве аргрументов сам попап и
+// имя класса, который нужно добавить для его открытия
+function openModal(popup, cssClassToOpenModal) {
+  popup.classList.add(cssClassToOpenModal);
   popup.addEventListener("keydown", handleEscKeyUp);
 }
 
-function closeModal() {
-  const popupToClose = document.querySelector(".popup_is-opened");
+//  функция закрывает попап
+// принимает в качестве аргрументов сам попап и
+// имя класса, который нужно удалить для его закрытия
+function closeModal(cssClassToOpenModal) {
+  const popupToClose = document.querySelector("." + cssClassToOpenModal);
   if (popupToClose) {
-    popupToClose.classList.remove("popup_is-opened");
+    popupToClose.classList.remove(cssClassToOpenModal);
     popupToClose.removeEventListener("keydown", handleEscKeyUp);
   }
 }
 
+// функция для обработки закрытия попапа по нажатию Esc
 function handleEscKeyUp(evt) {
   if (evt.key === "Escape") {
-    closeModal();
+    closeModal(cssClassToOpenModal);
   }
 }
 
