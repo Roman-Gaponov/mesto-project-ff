@@ -1,5 +1,7 @@
 /* ИМПОРТ */
 
+import '../pages/index.css'; // импорт главного файла стилей
+
 import { addCard } from "./card.js";
 import { openModal, closeModal } from "./modal.js";
 
