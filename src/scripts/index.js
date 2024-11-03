@@ -1,13 +1,10 @@
 /* ИМПОРТ */
 
-import '../pages/index.css'; // импорт главного файла стилей
+import "../pages/index.css"; // импорт главного файла стилей
 
-import { addCard } from "./card.js";
+import { createCard } from "./card.js";
+import { initialCards } from "./cards.js";
 import { openModal, closeModal } from "./modal.js";
-
-/* НАСТРОЙКИ */
-
-export let cssClassToOpenModal = "popup_is-opened";
 
 /* ЭЛЕМЕНТЫ СТРАНИЦЫ */
 
@@ -15,6 +12,10 @@ const mainContent = document.querySelector(".content");
 
 // контейнер для карт
 const cardContainer = mainContent.querySelector(".places__list");
+
+// элементы профиля
+const profileTitle = mainContent.querySelector(".profile__title");
+const profileDescription = mainContent.querySelector(".profile__description");
 
 //кнопки вызова попапов
 const buttonOpenProfileEdit = document.querySelector(".profile__edit-button");
@@ -39,23 +40,19 @@ const popupCaption = popupTypeImage.querySelector(".popup__caption");
 
 /* ВЫЗОВЫ ФУНКЦИЙ */
 
-addCard(cardContainer, "set");
+addCard(cardContainer, "set", enlargeCardImage);
 
 /* ОБРАБОТЧИКИ СОБЫТИЙ */
 
 // вызов попапа редактирования профиля
 buttonOpenProfileEdit.addEventListener("click", () => {
-  nameInput.value = mainContent.querySelector(".profile__title").textContent;
-  jobInput.value = mainContent.querySelector(
-    ".profile__description"
-  ).textContent;
-  openModal(popupProfileEdit, cssClassToOpenModal);
+  nameInput.value = profileTitle.textContent;
+  jobInput.value = profileDescription.textContent;
+  openModal(popupProfileEdit);
 });
 
 // вызов попапа добавления новой карточки
-buttonAddCard.addEventListener("click", () =>
-  openModal(popupNewCard, cssClassToOpenModal)
-);
+buttonAddCard.addEventListener("click", () => openModal(popupNewCard));
 
 // прикрепляем обработчики сабмитов к формам:
 formProfileEdit.addEventListener("submit", handleFormProfileEditSubmit);
@@ -71,28 +68,67 @@ addEventListenersForCloseModal(popupTypeImage);
 // функция обрабатывает сабмит формы редактирования профиля
 function handleFormProfileEditSubmit(evt) {
   evt.preventDefault();
-  mainContent.querySelector(".profile__title").textContent = nameInput.value;
-  mainContent.querySelector(".profile__description").textContent =
-    jobInput.value;
-  closeModal(cssClassToOpenModal);
+  profileTitle.textContent = nameInput.value;
+  profileDescription.textContent = jobInput.value;
+  closeModal(popupProfileEdit);
   evt.target.reset();
 }
 
 // функция обрабатывает сабмит формы добавления новой карточки
 function handleFormNewCardSubmit(evt) {
   evt.preventDefault();
-  addCard(cardContainer, "single", placeInput.value, srcImageInput.value);
-  closeModal(cssClassToOpenModal);
+  addCard(
+    cardContainer,
+    "single",
+    enlargeCardImage,
+    placeInput.value,
+    srcImageInput.value
+  );
+  closeModal(popupNewCard);
   evt.target.reset();
 }
 
 // функция вешает обработчики закрытия попапов
 function addEventListenersForCloseModal(popup) {
   const crossToClose = popup.querySelector(".popup__close");
-  crossToClose.addEventListener("click", () => closeModal(cssClassToOpenModal));
+  crossToClose.addEventListener("click", () => closeModal(popup));
   popup.addEventListener("mousedown", (evt) => {
     if (evt.target.classList.contains("popup")) {
-      closeModal(cssClassToOpenModal);
+      closeModal(popup);
     }
   });
+}
+
+// универсальная функция вывода набора карточек на страницу
+// и добавления новой пользовательской карточки
+function addCard(
+  cardContainer,
+  typeToAdd,
+  enlargeCardImage,
+  nameNewCard = "",
+  linkNewCard = ""
+) {
+  switch (typeToAdd) {
+    case "set": {
+      initialCards.forEach((item) => {
+        const cardElement = createCard(item, enlargeCardImage);
+        cardContainer.append(cardElement);
+      });
+      break;
+    }
+    case "single": {
+      const initialNewCard = { name: nameNewCard, link: linkNewCard };
+      const cardElement = createCard(initialNewCard, enlargeCardImage);
+      cardContainer.prepend(cardElement);
+    }
+  }
+}
+
+// функция открытия увеличенного просмотра изображения выбранной карточки
+// она передаётся в качестве параметра функции добавления карточки
+function enlargeCardImage(placeName, placeLink) {
+  popupImage.src = placeLink;
+  popupCaption.textContent = placeName;
+  popupImage.alt = placeName;
+  openModal(popupTypeImage);
 }

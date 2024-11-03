@@ -1,9 +1,3 @@
-/* ИМПОРТ */
-
-import { cssClassToOpenModal } from "./index.js";
-import { initialCards } from "./cards.js";
-import { openModal } from "./modal.js";
-
 /* ФУНКЦИИ ДЛЯ СОЗДАНИЯ КАРТОЧКИ */
 
 // темплейт карточки
@@ -15,7 +9,7 @@ function createCardExample() {
 }
 
 // функция создания карточки
-function createCard(initialCardValues, setLike, deleteCard) {
+function createCard(initialCardValues, enlargeCardImage) {
   // создаём экземпляр карточки
   const cardExample = createCardExample();
 
@@ -42,9 +36,8 @@ function createCard(initialCardValues, setLike, deleteCard) {
     .querySelector(".card__like-button")
     .addEventListener("click", setLike);
 
-  const popupTypeImage = document.querySelector(".popup_type_image");
   cardImage.addEventListener("click", () =>
-    popupCardImage(popupTypeImage, placeName, placeLink)
+    enlargeCardImage(placeName, placeLink)
   );
 
   return cardExample;
@@ -60,30 +53,4 @@ function setLike(evt) {
   evt.target.classList.toggle("card__like-button_is-active");
 }
 
-// универсальная функция вывода набора карточек на страницу
-// и добавления новой пользовательской карточки
-function addCard(cardContainer, typeToAdd, nameNewCard = "", linkNewCard = "") {
-  switch (typeToAdd) {
-    case "set": {
-      initialCards.forEach((item) => {
-        const cardElement = createCard(item, setLike, deleteCard);
-        cardContainer.append(cardElement);
-      });
-      break;
-    }
-    case "single": {
-      const initialNewCard = { name: nameNewCard, link: linkNewCard };
-      const cardElement = createCard(initialNewCard, setLike, deleteCard);
-      cardContainer.prepend(cardElement);
-    }
-  }
-}
-
-// функция открытия попапа просмотра изображения выбранной карточки
-function popupCardImage(popup, name, link) {
-  popup.querySelector(".popup__image").src = link;
-  popup.querySelector(".popup__caption").textContent = name;
-  openModal(popup, cssClassToOpenModal);
-}
-
-export { addCard };
+export { createCard };
