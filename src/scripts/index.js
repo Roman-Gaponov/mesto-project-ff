@@ -1,11 +1,13 @@
 /* ИМПОРТ */
 
 import "../pages/index.css"; // импорт главного файла стилей
+import { getMyProfile } from "./api.js";
 
 import { createCard } from "./card.js";
 import { initialCards } from "./cards.js";
 import { openModal, closeModal } from "./modal.js";
 import { enableValidation, clearValidation } from "./validation.js";
+import { getProfileData } from "./api.js";
 
 /* НАСТРОЙКИ */
 
@@ -19,6 +21,12 @@ const validationConfig = {
   errorClass: "popup__error_visible",
 };
 
+const profileConfig = {
+  nameSelector: '.profile__title',
+  descriptionSelector: '.profile__description',
+  avatarSelector: '.profile__image',
+}
+
 /* ЭЛЕМЕНТЫ СТРАНИЦЫ */
 
 const mainContent = document.querySelector(".content");
@@ -29,6 +37,7 @@ const cardContainer = mainContent.querySelector(".places__list");
 // элементы профиля
 const profileTitle = mainContent.querySelector(".profile__title");
 const profileDescription = mainContent.querySelector(".profile__description");
+const profileImage = mainContent.querySelector(".profile__image");
 
 //кнопки вызова попапов
 const buttonOpenProfileEdit = document.querySelector(".profile__edit-button");
@@ -57,6 +66,9 @@ addCard(cardContainer, "set", enlargeCardImage);
 
 // активация валидации форм
 enableValidation(validationConfig);
+
+// получение данных профиля от сервера
+getProfileData(profileConfig);
 
 /* ОБРАБОТЧИКИ СОБЫТИЙ */
 
