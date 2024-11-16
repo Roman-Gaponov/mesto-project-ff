@@ -7,6 +7,18 @@ import { initialCards } from "./cards.js";
 import { openModal, closeModal } from "./modal.js";
 import { enableValidation, clearValidation } from "./validation.js";
 
+/* НАСТРОЙКИ */
+
+// настройки валидации
+const validationConfig = {
+  formSelector: ".popup__form",
+  inputSelector: ".popup__input",
+  submitButtonSelector: ".popup__button",
+  inactiveButtonClass: "popup__button_disabled",
+  inputErrorClass: "popup__input_type_error",
+  errorClass: "popup__error_visible",
+};
+
 /* ЭЛЕМЕНТЫ СТРАНИЦЫ */
 
 const mainContent = document.querySelector(".content");
@@ -44,14 +56,7 @@ const popupCaption = popupTypeImage.querySelector(".popup__caption");
 addCard(cardContainer, "set", enlargeCardImage);
 
 // активация валидации форм
-enableValidation({
-  formSelector: ".popup__form",
-  inputSelector: ".popup__input",
-  submitButtonSelector: ".popup__button",
-  inactiveButtonClass: "popup__button_disabled",
-  inputErrorClass: "popup__input_type_error",
-  errorClass: "popup__error_visible",
-});
+enableValidation(validationConfig);
 
 /* ОБРАБОТЧИКИ СОБЫТИЙ */
 
@@ -59,21 +64,14 @@ enableValidation({
 buttonOpenProfileEdit.addEventListener("click", () => {
   nameInput.value = profileTitle.textContent;
   jobInput.value = profileDescription.textContent;
-  clearValidation(popupProfileEdit, {
-    inactiveButtonClass: "popup__button_disabled",
-    inputErrorClass: "popup__input_type_error",
-    errorClass: "popup__error_visible",
-  });
+  clearValidation(popupProfileEdit, validationConfig);
   openModal(popupProfileEdit);
 });
 
 // вызов попапа добавления новой карточки
 buttonAddCard.addEventListener("click", () => {
-  clearValidation(popupNewCard, {
-    inactiveButtonClass: "popup__button_disabled",
-    inputErrorClass: "popup__input_type_error",
-    errorClass: "popup__error_visible",
-  });
+  clearValidation(popupNewCard, validationConfig);
+  formNewCard.reset();
   openModal(popupNewCard);
 });
 

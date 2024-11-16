@@ -1,33 +1,33 @@
-function enableValidation(setOfClasses) {
+function enableValidation(validationConfig) {
   const formList = Array.from(
-    document.querySelectorAll(setOfClasses.formSelector)
+    document.querySelectorAll(validationConfig.formSelector)
   );
   formList.forEach((formElement) => {
-    setEventListeners(formElement, setOfClasses);
+    setEventListeners(formElement, validationConfig);
   });
 }
 
-function setEventListeners(formElement, setOfClasses) {
+function setEventListeners(formElement, validationConfig) {
   const inputList = Array.from(
-    formElement.querySelectorAll(setOfClasses.inputSelector)
+    formElement.querySelectorAll(validationConfig.inputSelector)
   );
   const buttonElement = formElement.querySelector(
-    setOfClasses.submitButtonSelector
+    validationConfig.submitButtonSelector
   );
-  toggleButtonState(inputList, buttonElement, setOfClasses);
+  toggleButtonState(inputList, buttonElement, validationConfig);
   inputList.forEach((inputElement) => {
     inputElement.addEventListener("input", function () {
-      toggleButtonState(inputList, buttonElement, setOfClasses);
-      checkInputValidity(formElement, inputElement, setOfClasses);
+      toggleButtonState(inputList, buttonElement, validationConfig);
+      checkInputValidity(formElement, inputElement, validationConfig);
     });
   });
 }
 
-function toggleButtonState(inputList, buttonElement, setOfClasses) {
+function toggleButtonState(inputList, buttonElement, validationConfig) {
   if (hasInvalidInput(inputList)) {
-    buttonElement.classList.add(setOfClasses.inactiveButtonClass);
+    buttonElement.classList.add(validationConfig.inactiveButtonClass);
   } else {
-    buttonElement.classList.remove(setOfClasses.inactiveButtonClass);
+    buttonElement.classList.remove(validationConfig.inactiveButtonClass);
   }
 }
 
@@ -37,39 +37,54 @@ function hasInvalidInput(inputList) {
   });
 }
 
-function checkInputValidity(formElement, inputElement, setOfClasses) {
+function checkInputValidity(formElement, inputElement, validationConfig) {
+  if (inputElement.validity.patternMismatch) {
+    inputElement.setCustomValidity(inputElement.dataset.errorMessage);
+  } else {
+    inputElement.setCustomValidity("");
+  }
+
   if (!inputElement.validity.valid) {
     showInputError(
       formElement,
       inputElement,
-      setOfClasses,
+      validationConfig,
       inputElement.validationMessage
     );
   } else {
-    hideInputError(formElement, inputElement, setOfClasses);
+    hideInputError(formElement, inputElement, validationConfig);
   }
 }
 
-function showInputError(formElement, inputElement, setOfClasses, errorMessage) {
+function showInputError(formElement, inputElement, validationConfig, errorMessage) {
   const errorElement = formElement.querySelector(
     `.${inputElement.name}-input-error`
   );
-  inputElement.classList.add(setOfClasses.inputErrorClass);
+  inputElement.classList.add(validationConfig.inputErrorClass);
   errorElement.textContent = errorMessage;
-  errorElement.classList.add(setOfClasses.errorClass);
+  errorElement.classList.add(validationConfig.errorClass);
 }
 
-function hideInputError(formElement, inputElement, setOfClasses) {
+function hideInputError(formElement, inputElement, validationConfig) {
   const errorElement = formElement.querySelector(
     `.${inputElement.name}-input-error`
   );
-  inputElement.classList.remove(setOfClasses.inputErrorClass);
-  errorElement.classList.remove(setOfClasses.errorClass);
+  inputElement.classList.remove(validationConfig.inputErrorClass);
+  errorElement.classList.remove(validationConfig.errorClass);
   errorElement.textContent = "";
 }
 
-function clearValidation(profileForm, validationConfig) {
-  console.log('!!!');
+function clearValidation(formElement, validationConfig) {
+  const inputList = Array.from(
+    formElement.querySelectorAll(validationConfig.inputSelector)
+  );
+  const buttonElement = formElement.querySelector(
+    validationConfig.submitButtonSelector
+  );
+  inputList.forEach((inputElement) => {
+    hideInputError(formElement, inputElement, validationConfig);
+  });
+  buttonElement.classList.add(validationConfig.inactiveButtonClass);
 }
 
 export { enableValidation, clearValidation };
