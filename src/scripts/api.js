@@ -11,7 +11,7 @@ const connectionConfig = {
   },
 };
 
-function fetchData(connectionConfig, src = "", method = "GET") {
+function fetchData(connectionConfig, src = "", method = "GET", body = {}) {
   switch (method) {
     case "GET": {
       return fetch(`${connectionConfig.baseUrl}/${src}`, {
@@ -22,16 +22,20 @@ function fetchData(connectionConfig, src = "", method = "GET") {
       return fetch(`${connectionConfig.baseUrl}/${src}`, {
         method: method,
         headers: connectionConfig.headers,
+        body: JSON.stringify(body),
       });
     }
     case "PATCH": {
       return fetch(`${connectionConfig.baseUrl}/${src}`, {
         method: method,
         headers: connectionConfig.headers,
-        body: JSON.stringify({
-          name: "Roman Gaponov",
-          about: "Data Analyst",
-        }),
+        body: JSON.stringify(body),
+      });
+    }
+    case "PUT": {
+      return fetch(`${connectionConfig.baseUrl}/${src}`, {
+        method: method,
+        headers: connectionConfig.headers,
       });
     }
     case "DELETE": {
@@ -43,34 +47,188 @@ function fetchData(connectionConfig, src = "", method = "GET") {
   }
 }
 
-function getProfileData(profileConfig) {
+function getProfileAndCards(
+  profileConfig,
+  cardContainer,
+  createCard,
+  toggleLikeQuery,
+  enlargeCardImage,
+  deleteCard
+) {
+  const srcProfile = "users/me";
+  const srcCards = "cards";
+  Promise.all([
+    fetchData(connectionConfig, srcProfile),
+    fetchData(connectionConfig, srcCards),
+  ])
+    .then((resultArray) => {
+      if (resultArray.every((result) => result.ok)) {
+        console.log("Данные профиля и карточек успешно загружены с сервера");
+        return Promise.all( resultArray.map((result) => result.json()) );
+      }
+      return Promise.reject(resultArray.map((result) => result.status));
+    })
+    .then((resultArrayData) => {
+      const profileData = resultArrayData[0];
+      const cardsArrayData = resultArrayData[1];
+
+      const userId = profileData._id;
+
+      document.querySelector(profileConfig.nameSelector).textContent =
+        profileData.name;
+      document.querySelector(profileConfig.descriptionSelector).textContent =
+        profileData.about;
+      document.querySelector(profileConfig.avatarSelector).src =
+        profileData.avatar;
+
+      cardsArrayData.forEach((cardData) => {
+        const cardElement = createCard(
+          cardData,
+          userId,
+          toggleLikeQuery,
+          enlargeCardImage,
+          deleteCard
+        );
+        cardContainer.append(cardElement);
+      });
+    })
+    .catch((err) => {
+      console.log(`Ошибка: ${err}`);
+    });
+}
+
+function saveProfileData(profileData) {
   const src = "users/me";
-  fetchData(connectionConfig, src)
+  const body = {
+    name: profileData.name,
+    about: profileData.about,
+  };
+  fetchData(connectionConfig, src, "PATCH", body)
+    .then((result) => {
+      if (result.ok) {
+        console("Данные профиля успешно сохранены");
+      }
+      return Promise.reject(result.status);
+    })
+    .then((resultData) => {
+      console.log(resultData);
+    })
+    .catch((err) => {
+      console.log(`Ошибка: ${err}`);
+    });
+}
+
+function postCard(
+  newCardData,
+  cardContainer,
+  createCard,
+  toggleLikeQuery,
+  enlargeCardImage,
+  deleteCard
+) {
+  const src = "cards";
+  const body = {
+    name: newCardData.name,
+    link: newCardData.link,
+  };
+  fetchData(connectionConfig, src, "POST", body)
     .then((result) => {
       if (result.ok) {
         return result.json();
       }
       return Promise.reject(result.status);
     })
-    .then((resultData) => {
-      document.querySelector(profileConfig.nameSelector).textContent =
-        resultData.name;
-      document.querySelector(profileConfig.descriptionSelector).textContent =
-        resultData.about;
-      document.querySelector(profileConfig.avatarSelector).src =
-        resultData.avatar;
+    .then((resultCardData) => {
+      const userId = resultCardData.owner._id;
 
-      // console.log(resultData);
+      const cardElement = createCard(
+        resultCardData,
+        userId,
+        toggleLikeQuery,
+        enlargeCardImage,
+        deleteCard
+      );
+      cardContainer.prepend(cardElement);
+      console.log("Карточка успешно добавлена");
     })
     .catch((err) => {
       console.log(`Ошибка: ${err}`);
-      //renderError(`Ошибка: ${err}`);
     });
-  //.finally(() => {
-  //renderLoading(false);
-  //})
 }
 
-function setProfileData() {}
+function toggleLikeQuery(cardId, likeButton, likesCounter, isLiked) {
+  const src = "cards/likes/" + cardId;
+  if (!isLiked) {
+    fetchData(connectionConfig, src, "PUT")
+      .then((result) => {
+        if (result.ok) {
+          console.log("Лайк успешно поставлен");
+          return result.json();
+        }
+        return Promise.reject(result.status);
+      })
+      .then((resultData) => {
+        likesCounter.textContent = resultData.likes.length;
+        likeButton.classList.add("card__like-button_is-active");
+      })
+      .catch((err) => {
+        console.log(`Ошибка: ${err}`);
+      });
+  } else {
+    fetchData(connectionConfig, src, "DELETE")
+      .then((result) => {
+        if (result.ok) {
+          likeButton.classList.remove("card__like-button_is-active");
+          let amountLikes = Number(likesCounter.textContent);
+          amountLikes -= 1;
+          likesCounter.textContent = String(amountLikes);
+          console.log("Лайк успешно удалён");
+          return;
+        }
+        return Promise.reject(result.status);
+      })
+      .catch((err) => {
+        console.log(`Ошибка: ${err}`);
+      });
+  }
+}
 
-export { getProfileData };
+// функция удаления карточки
+function deleteCard(cardId, cardExample) {
+  const src = "cards/" + cardId;
+  fetchData(connectionConfig, src, "DELETE")
+    .then((result) => {
+      if (result.ok) {
+        cardExample.remove();
+        console.log("Карточка успешно удалена");
+        return;
+      }
+      return Promise.reject(result.status);
+    })
+    .catch((err) => {
+      console.log(`Ошибка: ${err}`);
+    });
+}
+
+function updateAvatar(avatarSrc) {
+  const src = "users/me" + avatarSrc;
+  fetchData(connectionConfig, src, "PATCH")
+    .then((result) => {
+      if (result.ok) {
+        console("Аватар успешно добавлен");
+      }
+      return Promise.reject(result.status);
+    })
+    .catch((err) => {
+      console.log(`Ошибка: ${err}`);
+    });
+}
+
+export {
+  getProfileAndCards,
+  saveProfileData,
+  updateAvatar,
+  postCard,
+  toggleLikeQuery,
+  deleteCard,
+};

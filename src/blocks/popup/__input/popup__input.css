@@ -19,22 +19,30 @@
 }
 
 .popup__input-error {
-  display: block;
-  inline-size: 100%;
+  position: absolute;
+  display: none;
+  white-space: normal;
+  inline-size: 358px;
   min-block-size: 2rem;
   font-size: 12px;
   line-height: 1.2em;
   color: red;
-  opacity: 0;
+  inset-block-start: 140px;
+  inset-inline-start: 38px;
   transition: 0.3s;
 }
 
 .popup__input-error:last-of-type {
   margin-top: 10px;
+  inset-block-start: 188px;
 }
 
 .popup__error_visible {
-  opacity: 1;
+  display: block;
+}
+
+.popup__input-error.avatar-link-input-error {
+  inset-block-start: 130px;
 }
 
 @media screen and (max-width: 568px) {

@@ -1,13 +1,19 @@
 /* ИМПОРТ */
 
 import "../pages/index.css"; // импорт главного файла стилей
-import { getMyProfile } from "./api.js";
 
 import { createCard } from "./card.js";
 import { initialCards } from "./cards.js";
 import { openModal, closeModal } from "./modal.js";
 import { enableValidation, clearValidation } from "./validation.js";
-import { getProfileData } from "./api.js";
+import {
+  getProfileAndCards,
+  saveProfileData,
+  updateAvatar,
+  postCard,
+  toggleLikeQuery,
+  deleteCard,
+} from "./api.js";
 
 /* НАСТРОЙКИ */
 
@@ -22,10 +28,10 @@ const validationConfig = {
 };
 
 const profileConfig = {
-  nameSelector: '.profile__title',
-  descriptionSelector: '.profile__description',
-  avatarSelector: '.profile__image',
-}
+  nameSelector: ".profile__title",
+  descriptionSelector: ".profile__description",
+  avatarSelector: ".profile__image",
+};
 
 /* ЭЛЕМЕНТЫ СТРАНИЦЫ */
 
@@ -49,6 +55,13 @@ const formProfileEdit = document.forms["edit-profile"];
 const nameInput = popupProfileEdit.querySelector("input[name='name']");
 const jobInput = popupProfileEdit.querySelector("input[name='description']");
 
+// попап обновления аватара
+const popupUpdateAvatar = document.querySelector(".popup_type_update-avatar");
+const formUpdateAvatar = document.forms["update-avatar"];
+const srcAvatarInput = popupUpdateAvatar.querySelector(
+  "input[name='avatar-link']"
+);
+
 // попап создания новой карточки
 const popupNewCard = document.querySelector(".popup_type_new-card");
 const formNewCard = document.forms["new-place"];
@@ -62,13 +75,18 @@ const popupCaption = popupTypeImage.querySelector(".popup__caption");
 
 /* ВЫЗОВЫ ФУНКЦИЙ */
 
-addCard(cardContainer, "set", enlargeCardImage);
-
 // активация валидации форм
 enableValidation(validationConfig);
 
-// получение данных профиля от сервера
-getProfileData(profileConfig);
+// добавление карточек, полученных от сервера
+addCard(
+  cardContainer,
+  "get",
+  toggleLikeQuery,
+  enlargeCardImage,
+  deleteCard,
+  profileConfig
+);
 
 /* ОБРАБОТЧИКИ СОБЫТИЙ */
 
@@ -87,14 +105,23 @@ buttonAddCard.addEventListener("click", () => {
   openModal(popupNewCard);
 });
 
+// вызов попапа обновления аватара
+profileImage.addEventListener("click", () => {
+  clearValidation(popupUpdateAvatar, validationConfig);
+  formUpdateAvatar.reset();
+  openModal(popupUpdateAvatar);
+});
+
 // прикрепляем обработчики сабмитов к формам:
 formProfileEdit.addEventListener("submit", handleFormProfileEditSubmit);
 formNewCard.addEventListener("submit", handleFormNewCardSubmit);
+formUpdateAvatar.addEventListener("submit", handleFormUpdateAvatarSubmit);
 
 // вешаем обработчики закрытия на все попапы
 addEventListenersForCloseModal(popupProfileEdit);
 addEventListenersForCloseModal(popupNewCard);
 addEventListenersForCloseModal(popupTypeImage);
+addEventListenersForCloseModal(popupUpdateAvatar);
 
 /* ФУНКЦИИ ОБРАБОТЧИКОВ СОБЫТИЙ */
 
@@ -103,22 +130,56 @@ function handleFormProfileEditSubmit(evt) {
   evt.preventDefault();
   profileTitle.textContent = nameInput.value;
   profileDescription.textContent = jobInput.value;
+  waitSubmitForm(evt.target, "start");
+  saveProfileData({
+    name: nameInput.value,
+    about: jobInput.value,
+  });
   closeModal(popupProfileEdit);
+  waitSubmitForm(evt.target, "end");
   evt.target.reset();
 }
 
 // функция обрабатывает сабмит формы добавления новой карточки
 function handleFormNewCardSubmit(evt) {
   evt.preventDefault();
+  waitSubmitForm(evt.target, "start");
   addCard(
     cardContainer,
-    "single",
+    "post",
+    toggleLikeQuery,
     enlargeCardImage,
+    deleteCard,
+    profileConfig,
     placeInput.value,
     srcImageInput.value
   );
   closeModal(popupNewCard);
+  waitSubmitForm(evt.target, "end");
   evt.target.reset();
+}
+
+// функция обрабатывает сабмит формы редактирования профиля
+function handleFormUpdateAvatarSubmit(evt) {
+  evt.preventDefault();
+  waitSubmitForm(evt.target, "start");
+  updateAvatar(srcAvatarInput.value);
+  closeModal(popupUpdateAvatar);
+  waitSubmitForm(evt.target, "end");
+  evt.target.reset();
+}
+
+function waitSubmitForm(form, waitingPosition) {
+  const submitButton = form.querySelector(".popup__button");
+  switch (waitingPosition) {
+    case "start": {
+      submitButton.textContent += "...";
+      break;
+    }
+    case "end": {
+      submitButton.textContent = submitButton.textContent.replace("...", "");
+    }
+  }
 }
 
 // функция вешает обработчики закрытия попапов
@@ -137,22 +198,35 @@ function addEventListenersForCloseModal(popup) {
 function addCard(
   cardContainer,
   typeToAdd,
+  toggleLikeQuery,
   enlargeCardImage,
+  deleteCard,
+  profileConfig = "",
   nameNewCard = "",
   linkNewCard = ""
 ) {
   switch (typeToAdd) {
-    case "set": {
-      initialCards.forEach((item) => {
-        const cardElement = createCard(item, enlargeCardImage);
-        cardContainer.append(cardElement);
-      });
+    case "get": {
+      getProfileAndCards(
+        profileConfig,
+        cardContainer,
+        createCard,
+        toggleLikeQuery,
+        enlargeCardImage,
+        deleteCard
+      );
       break;
     }
-    case "single": {
-      const initialNewCard = { name: nameNewCard, link: linkNewCard };
-      const cardElement = createCard(initialNewCard, enlargeCardImage);
-      cardContainer.prepend(cardElement);
+    case "post": {
+      const newCardData = { name: nameNewCard, link: linkNewCard };
+      postCard(
+        newCardData,
+        cardContainer,
+        createCard,
+        toggleLikeQuery,
+        enlargeCardImage,
+        deleteCard
+      );
     }
   }
 }
