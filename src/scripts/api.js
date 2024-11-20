@@ -1,3 +1,5 @@
+/* НАСТРОЙКИ */
+
 const loginConfig = {
   cohortId: "wff-cohort-26",
   token: "3030b019-4537-4e11-8fa7-8b770ae8139c",
@@ -11,6 +13,9 @@ const connectionConfig = {
   },
 };
 
+/* ФУНКЦИИ */
+
+// функция, которая включает весь необходимый набор запросов на сервер
 function fetchData(connectionConfig, src = "", method = "GET", body = {}) {
   switch (method) {
     case "GET": {
@@ -47,6 +52,7 @@ function fetchData(connectionConfig, src = "", method = "GET", body = {}) {
   }
 }
 
+// функция получающая данные профиля и карточек от сервера
 function getProfileAndCards(
   profileConfig,
   cardContainer,
@@ -64,7 +70,7 @@ function getProfileAndCards(
     .then((resultArray) => {
       if (resultArray.every((result) => result.ok)) {
         console.log("Данные профиля и карточек успешно загружены с сервера");
-        return Promise.all( resultArray.map((result) => result.json()) );
+        return Promise.all(resultArray.map((result) => result.json()));
       }
       return Promise.reject(resultArray.map((result) => result.status));
     })
@@ -78,8 +84,9 @@ function getProfileAndCards(
         profileData.name;
       document.querySelector(profileConfig.descriptionSelector).textContent =
         profileData.about;
-      document.querySelector(profileConfig.avatarSelector).src =
-        profileData.avatar;
+      document.querySelector(
+        profileConfig.avatarSelector
+      ).style.backgroundImage = `url(${profileData.avatar})`;
 
       cardsArrayData.forEach((cardData) => {
         const cardElement = createCard(
@@ -97,6 +104,7 @@ function getProfileAndCards(
     });
 }
 
+// функция сохранения профиля
 function saveProfileData(profileData) {
   const src = "users/me";
   const body = {
@@ -118,6 +126,8 @@ function saveProfileData(profileData) {
     });
 }
 
+// функция добавляющая карточку на страницу
+// и сохраняющая данные по карточке на сервере
 function postCard(
   newCardData,
   cardContainer,
@@ -156,6 +166,7 @@ function postCard(
     });
 }
 
+// функция запроса на снятие/установку лайка
 function toggleLikeQuery(cardId, likeButton, likesCounter, isLiked) {
   const src = "cards/likes/" + cardId;
   if (!isLiked) {
@@ -210,14 +221,23 @@ function deleteCard(cardId, cardExample) {
     });
 }
 
-function updateAvatar(avatarSrc) {
-  const src = "users/me" + avatarSrc;
-  fetchData(connectionConfig, src, "PATCH")
+// функция обновления аватара
+function updateAvatar(avatarSrc, profileImage) {
+  const src = "users/me/avatar";
+  const body = {
+    avatar: avatarSrc,
+  };
+  fetchData(connectionConfig, src, "PATCH", body)
     .then((result) => {
       if (result.ok) {
-        console("Аватар успешно добавлен");
+        return result.json();
       }
       return Promise.reject(result.status);
+    })
+    .then((resultData) => {
+      console.log(resultData.avatar);
+      profileImage.style.backgroundImage = `url(${resultData.avatar})`;
+      console.log("Аватар успешно добавлен");
     })
     .catch((err) => {
       console.log(`Ошибка: ${err}`);

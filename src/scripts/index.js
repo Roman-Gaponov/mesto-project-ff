@@ -3,7 +3,6 @@
 import "../pages/index.css"; // импорт главного файла стилей
 
 import { createCard } from "./card.js";
-import { initialCards } from "./cards.js";
 import { openModal, closeModal } from "./modal.js";
 import { enableValidation, clearValidation } from "./validation.js";
 import {
@@ -27,6 +26,7 @@ const validationConfig = {
   errorClass: "popup__error_visible",
 };
 
+// настройки профиля
 const profileConfig = {
   nameSelector: ".profile__title",
   descriptionSelector: ".profile__description",
@@ -163,7 +163,7 @@ function handleFormNewCardSubmit(evt) {
 function handleFormUpdateAvatarSubmit(evt) {
   evt.preventDefault();
   waitSubmitForm(evt.target, "start");
-  updateAvatar(srcAvatarInput.value);
+  updateAvatar(srcAvatarInput.value, profileImage);
   closeModal(popupUpdateAvatar);
   waitSubmitForm(evt.target, "end");
   evt.target.reset();
@@ -213,7 +213,7 @@ function addCard(
         createCard,
         toggleLikeQuery,
         enlargeCardImage,
-        deleteCard
+        deleteCard,
       );
       break;
     }
@@ -225,7 +225,7 @@ function addCard(
         createCard,
         toggleLikeQuery,
         enlargeCardImage,
-        deleteCard
+        deleteCard,
       );
     }
   }

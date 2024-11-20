@@ -26,11 +26,14 @@ function createCard(
   const likeButton = cardExample.querySelector(".card__like-button");
   const likesCounter = cardExample.querySelector(".card__like-amount");
 
+  // записываем в переменные данные по карточке,
+  // полученные от сервера
   const placeName = cardData.name;
   const placeLink = cardData.link;
   const cardId = cardData._id;
   const ownerId = cardData.owner._id;
 
+  // получаем количество лайков
   const placeLikes = cardData.likes;
   const amountLikes = placeLikes.length;
 
@@ -43,33 +46,31 @@ function createCard(
 
   // добавляем к кнопке удаления обработчик события
   if (ownerId === userId) {
-    // deleteButton.addEventListener("click", deleteCard);
-    deleteButton.addEventListener("click", () =>
-      deleteCard(cardId, cardExample)
-    );
+    deleteButton.addEventListener("click", () => {
+      deleteCard(cardId, cardExample);
+    });
   } else {
     deleteButton.remove();
   }
-
-  // ownerId !== userId && deleteButton.remove();
 
   // добавляем к кнопке лайка обработчик события
   likeButton.addEventListener("click", (evt) =>
     setLike(evt, cardId, likesCounter, toggleLikeQuery)
   );
 
+  // добавляем обработчик события увеличения изображения карточки
   cardImage.addEventListener("click", () =>
     enlargeCardImage(placeName, placeLink)
   );
 
-  // console.log(placeLikes);
-  // console.log(userId);
+  // проверка наличия лайка, поставленного ранее
   const isLiked = placeLikes.some((like) => like._id === userId);
-  // console.log(isLiked);
+
   if (isLiked) {
     likeButton.classList.add("card__like-button_is-active");
   }
 
+  // устанавливаем количество лайков
   if (amountLikes) {
     likesCounter.textContent = amountLikes;
   } else {
@@ -79,11 +80,7 @@ function createCard(
   return cardExample;
 }
 
-// функция удаления карточки
-// function deleteCard(evt) {
-//   evt.target.closest(".card").remove();
-// }
-
+// функция проверяющая наличие поставленного лайка у карточки
 function hadLiked(target) {
   if (target.classList.contains("card__like-button_is-active")) {
     return true;
@@ -93,8 +90,6 @@ function hadLiked(target) {
 
 // функция установки/снятия лайка
 function setLike(evt, cardId, likesCounter, toggleLikeQuery) {
-  // evt.target.classList.toggle("card__like-button_is-active");
-
   toggleLikeQuery(cardId, evt.target, likesCounter, hadLiked(evt.target));
 }
 

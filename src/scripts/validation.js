@@ -56,7 +56,12 @@ function checkInputValidity(formElement, inputElement, validationConfig) {
   }
 }
 
-function showInputError(formElement, inputElement, validationConfig, errorMessage) {
+function showInputError(
+  formElement,
+  inputElement,
+  validationConfig,
+  errorMessage
+) {
   const errorElement = formElement.querySelector(
     `.${inputElement.name}-input-error`
   );
