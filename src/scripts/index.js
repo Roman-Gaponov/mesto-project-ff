@@ -6,12 +6,11 @@ import { createCard } from "./card.js";
 import { openModal, closeModal } from "./modal.js";
 import { enableValidation, clearValidation } from "./validation.js";
 import {
-  getProfileAndCards,
-  saveProfileData,
-  updateAvatar,
-  postCard,
-  toggleLikeQuery,
-  deleteCard,
+  getProfileDataQuery,
+  getInitialCardsQuery,
+  addNewCardQuery,
+  saveProfileDataQuery,
+  updateAvatarQuery,
 } from "./api.js";
 
 /* НАСТРОЙКИ */
@@ -53,7 +52,7 @@ const buttonAddCard = document.querySelector(".profile__add-button");
 const popupProfileEdit = document.querySelector(".popup_type_edit");
 const formProfileEdit = document.forms["edit-profile"];
 const nameInput = popupProfileEdit.querySelector("input[name='name']");
-const jobInput = popupProfileEdit.querySelector("input[name='description']");
+const aboutInput = popupProfileEdit.querySelector("input[name='description']");
 
 // попап обновления аватара
 const popupUpdateAvatar = document.querySelector(".popup_type_update-avatar");
@@ -71,44 +70,58 @@ const srcImageInput = popupNewCard.querySelector("input[name='link']");
 // попап просмотра избражения выбранной карточки
 const popupTypeImage = document.querySelector(".popup_type_image");
 const popupImage = popupTypeImage.querySelector(".popup__image");
-const popupCaption = popupTypeImage.querySelector(".popup__caption");
+const popupImageCaption = popupTypeImage.querySelector(".popup__caption");
 
 /* ВЫЗОВЫ ФУНКЦИЙ */
 
 // активация валидации форм
 enableValidation(validationConfig);
 
-// добавление карточек, полученных от сервера
-addCard(
-  cardContainer,
-  "get",
-  toggleLikeQuery,
-  enlargeCardImage,
-  deleteCard,
-  profileConfig
-);
+// получение от сервера и обработка данных профиля и карточек
+Promise.all([getProfileDataQuery(), getInitialCardsQuery()])
+  .then(([profileData, cardsArrayData]) => {
+    const userId = profileData._id;
+    
+    document.querySelector(profileConfig.nameSelector).textContent =
+    profileData.name;
+    document.querySelector(profileConfig.descriptionSelector).textContent =
+    profileData.about;
+    document.querySelector(
+      profileConfig.avatarSelector
+    ).style.backgroundImage = `url(${profileData.avatar})`;
+    
+    cardsArrayData.forEach((cardData) => {
+      const cardElement = createCard(cardData, userId, enlargeCardImage);
+      cardContainer.append(cardElement);
+    });
+    console.log("Данные профиля и карточек успешно загружены с сервера");
+  })
+  .catch(([err1, err2]) => {
+    console.log(err1);
+    console.log(err2);
+  });
 
 /* ОБРАБОТЧИКИ СОБЫТИЙ */
 
 // вызов попапа редактирования профиля
 buttonOpenProfileEdit.addEventListener("click", () => {
   nameInput.value = profileTitle.textContent;
-  jobInput.value = profileDescription.textContent;
+  aboutInput.value = profileDescription.textContent;
   clearValidation(popupProfileEdit, validationConfig);
   openModal(popupProfileEdit);
 });
 
 // вызов попапа добавления новой карточки
 buttonAddCard.addEventListener("click", () => {
-  clearValidation(popupNewCard, validationConfig);
   formNewCard.reset();
+  clearValidation(popupNewCard, validationConfig);
   openModal(popupNewCard);
 });
 
 // вызов попапа обновления аватара
 profileImage.addEventListener("click", () => {
-  clearValidation(popupUpdateAvatar, validationConfig);
   formUpdateAvatar.reset();
+  clearValidation(popupUpdateAvatar, validationConfig);
   openModal(popupUpdateAvatar);
 });
 
@@ -129,14 +142,21 @@ addEventListenersForCloseModal(popupUpdateAvatar);
 function handleFormProfileEditSubmit(evt) {
   evt.preventDefault();
   profileTitle.textContent = nameInput.value;
-  profileDescription.textContent = jobInput.value;
+  profileDescription.textContent = aboutInput.value;
   waitSubmitForm(evt.target, "start");
-  saveProfileData({
-    name: nameInput.value,
-    about: jobInput.value,
-  });
-  closeModal(popupProfileEdit);
-  waitSubmitForm(evt.target, "end");
+
+  saveProfileDataQuery(nameInput.value, aboutInput.value)
+    .then(() => {
+      closeModal(popupProfileEdit);
+      console.log("Данные профиля успешно сохранены");
+    })
+    .catch((err) => {
+      console.log(err);
+    })
+    .finally(() => {
+      waitSubmitForm(evt.target, "end");
+    });
+
   evt.target.reset();
 }
 
@@ -144,18 +164,23 @@ function handleFormProfileEditSubmit(evt) {
 function handleFormNewCardSubmit(evt) {
   evt.preventDefault();
   waitSubmitForm(evt.target, "start");
-  addCard(
-    cardContainer,
-    "post",
-    toggleLikeQuery,
-    enlargeCardImage,
-    deleteCard,
-    profileConfig,
-    placeInput.value,
-    srcImageInput.value
-  );
-  closeModal(popupNewCard);
-  waitSubmitForm(evt.target, "end");
+
+  addNewCardQuery(placeInput.value, srcImageInput.value)
+    .then((resultCardData) => {
+      const userId = resultCardData.owner._id;
+
+      const cardElement = createCard(resultCardData, userId, enlargeCardImage);
+      cardContainer.prepend(cardElement);
+      closeModal(popupNewCard);
+      console.log("Карточка успешно добавлена");
+    })
+    .catch((err) => {
+      console.log(err);
+    })
+    .finally(() => {
+      waitSubmitForm(evt.target, "end");
+    });
+
   evt.target.reset();
 }
 
@@ -163,9 +188,20 @@ function handleFormNewCardSubmit(evt) {
 function handleFormUpdateAvatarSubmit(evt) {
   evt.preventDefault();
   waitSubmitForm(evt.target, "start");
-  updateAvatar(srcAvatarInput.value, profileImage);
-  closeModal(popupUpdateAvatar);
-  waitSubmitForm(evt.target, "end");
+
+  updateAvatarQuery(srcAvatarInput.value)
+    .then((resultData) => {
+      profileImage.style.backgroundImage = `url(${resultData.avatar})`;
+      closeModal(popupUpdateAvatar);
+      console.log("Аватар успешно добавлен");
+    })
+    .catch((err) => {
+      console.log(err);
+    })
+    .finally(() => {
+      waitSubmitForm(evt.target, "end");
+    });
+
   evt.target.reset();
 }
 
@@ -193,49 +229,11 @@ function addEventListenersForCloseModal(popup) {
   });
 }
 
-// универсальная функция вывода набора карточек на страницу
-// и добавления новой пользовательской карточки
-function addCard(
-  cardContainer,
-  typeToAdd,
-  toggleLikeQuery,
-  enlargeCardImage,
-  deleteCard,
-  profileConfig = "",
-  nameNewCard = "",
-  linkNewCard = ""
-) {
-  switch (typeToAdd) {
-    case "get": {
-      getProfileAndCards(
-        profileConfig,
-        cardContainer,
-        createCard,
-        toggleLikeQuery,
-        enlargeCardImage,
-        deleteCard,
-      );
-      break;
-    }
-    case "post": {
-      const newCardData = { name: nameNewCard, link: linkNewCard };
-      postCard(
-        newCardData,
-        cardContainer,
-        createCard,
-        toggleLikeQuery,
-        enlargeCardImage,
-        deleteCard,
-      );
-    }
-  }
-}
-
 // функция открытия увеличенного просмотра изображения выбранной карточки
 // она передаётся в качестве параметра функции добавления карточки
 function enlargeCardImage(placeName, placeLink) {
   popupImage.src = placeLink;
-  popupCaption.textContent = placeName;
+  popupImageCaption.textContent = placeName;
   popupImage.alt = placeName;
   openModal(popupTypeImage);
 }
