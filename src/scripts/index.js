@@ -81,15 +81,15 @@ enableValidation(validationConfig);
 Promise.all([getProfileDataQuery(), getInitialCardsQuery()])
   .then(([profileData, cardsArrayData]) => {
     const userId = profileData._id;
-    
+
     document.querySelector(profileConfig.nameSelector).textContent =
-    profileData.name;
+      profileData.name;
     document.querySelector(profileConfig.descriptionSelector).textContent =
-    profileData.about;
+      profileData.about;
     document.querySelector(
       profileConfig.avatarSelector
     ).style.backgroundImage = `url(${profileData.avatar})`;
-    
+
     cardsArrayData.forEach((cardData) => {
       const cardElement = createCard(cardData, userId, enlargeCardImage);
       cardContainer.append(cardElement);
@@ -141,13 +141,14 @@ addEventListenersForCloseModal(popupUpdateAvatar);
 // функция обрабатывает сабмит формы редактирования профиля
 function handleFormProfileEditSubmit(evt) {
   evt.preventDefault();
-  profileTitle.textContent = nameInput.value;
-  profileDescription.textContent = aboutInput.value;
   waitSubmitForm(evt.target, "start");
 
   saveProfileDataQuery(nameInput.value, aboutInput.value)
-    .then(() => {
+    .then((res) => {
+      profileTitle.textContent = res.name;
+      profileDescription.textContent = res.about;
       closeModal(popupProfileEdit);
+      evt.target.reset();
       console.log("Данные профиля успешно сохранены");
     })
     .catch((err) => {
@@ -156,8 +157,6 @@ function handleFormProfileEditSubmit(evt) {
     .finally(() => {
       waitSubmitForm(evt.target, "end");
     });
-
-  evt.target.reset();
 }
 
 // функция обрабатывает сабмит формы добавления новой карточки
@@ -172,6 +171,7 @@ function handleFormNewCardSubmit(evt) {
       const cardElement = createCard(resultCardData, userId, enlargeCardImage);
       cardContainer.prepend(cardElement);
       closeModal(popupNewCard);
+      evt.target.reset();
       console.log("Карточка успешно добавлена");
     })
     .catch((err) => {
@@ -180,8 +180,6 @@ function handleFormNewCardSubmit(evt) {
     .finally(() => {
       waitSubmitForm(evt.target, "end");
     });
-
-  evt.target.reset();
 }
 
 // функция обрабатывает сабмит формы редактирования профиля
@@ -193,6 +191,7 @@ function handleFormUpdateAvatarSubmit(evt) {
     .then((resultData) => {
       profileImage.style.backgroundImage = `url(${resultData.avatar})`;
       closeModal(popupUpdateAvatar);
+      evt.target.reset();
       console.log("Аватар успешно добавлен");
     })
     .catch((err) => {
@@ -201,8 +200,6 @@ function handleFormUpdateAvatarSubmit(evt) {
     .finally(() => {
       waitSubmitForm(evt.target, "end");
     });
-
-  evt.target.reset();
 }
 
 function waitSubmitForm(form, waitingPosition) {
